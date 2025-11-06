@@ -1,8 +1,0 @@
-Manifest-Version: 1.0
-Specification-Title: Heavy Storms
-Specification-Vendor: nolyn
-Specification-Version: 0.1.0
-Implementation-Title: HeavyStorms
-Implementation-Version: 0.1.0
-Implementation-Vendor: nolyn
-
