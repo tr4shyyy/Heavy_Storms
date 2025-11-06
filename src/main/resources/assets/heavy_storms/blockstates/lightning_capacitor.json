@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "heavy_storms:block/lightning_capacitor"
+    }
+  }
+}
