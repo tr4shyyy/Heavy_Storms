@@ -1,0 +1,11 @@
+.gradle/
+build/
+runs/
+
+# Logs
+*.log
+*.log.*
+
+# OS cruft
+.DS_Store
+Thumbs.db
