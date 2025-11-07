@@ -1,3 +1,5 @@
+![Heavy Storms Preview](https://github.com/tr4shyyy/Heavy_Storms/blob/master/Heavy_storms_1.gif?raw=true)
+
 # Heavy Storms (NeoForge 1.21.1)
 
 Heavy Storms amplifies thunderstorms and introduces a Forge Energy compatible Lightning Capacitor block for Minecraft 1.21.1 using NeoForge.
