@@ -7,7 +7,7 @@ plugins {
 }
 
 group = 'com.nolyn.heavystorms'
-version = '0.1.0'
+version = '0.3.0'
 
 base {
     archivesName = 'heavy_storms'
