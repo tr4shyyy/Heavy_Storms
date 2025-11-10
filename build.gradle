@@ -1,9 +1,7 @@
-import net.neoforged.gradle.dsl.common.util.DistributionType
-
 plugins {
     id 'java'
     id 'idea'
-    id 'net.neoforged.gradle.userdev' version '7.0.192'
+    id 'net.minecraftforge.gradle' version '[6.0.16,6.2)'
 }
 
 group = 'com.nolyn.heavystorms'
@@ -15,25 +13,66 @@ base {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
 repositories {
     mavenCentral()
     maven {
-        name = 'NeoForged'
-        url = uri('https://maven.neoforged.net/releases')
+        name = 'Forge'
+        url = uri('https://maven.minecraftforge.net')
     }
 }
 
+minecraft {
+    mappings channel: 'official', version: '1.20.1'
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'info'
+
+            mods {
+                heavy_storms {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        server {
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'info'
+
+            mods {
+                heavy_storms {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        data {
+            workingDirectory project.file('run')
+            args '--mod', 'heavy_storms', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+
+            mods {
+                heavy_storms {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
 dependencies {
-    implementation 'net.neoforged:neoforge:21.1.210'
+    minecraft 'net.minecraftforge:forge:1.20.1-47.2.0'
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
-    options.release = 21
+    options.release = 17
 }
 
 tasks.withType(Jar).configureEach {
@@ -47,11 +86,4 @@ tasks.withType(Jar).configureEach {
                 'Implementation-Vendor': 'nolyn'
         )
     }
-}
-
-userDevRuntime.maybeCreate {
-    withForgeGroup("net.neoforged")
-    withForgeName("neoforge")
-    withForgeVersion("21.1.210")
-    withDistributionType(DistributionType.JOINED)
 }

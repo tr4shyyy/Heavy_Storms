@@ -1,7 +1,7 @@
 ## Heavy Storms – Stopping Point (2025-11-03)
 
 Latest status:
-- NeoForge 1.21.1 project uses Gradle wrapper 8.13. `./gradlew --no-daemon build` succeeds.
+- Forge 1.20.1 project uses the bundled Gradle wrapper. `./gradlew --no-daemon build` succeeds.
 - Lightning Capacitor is a block with block entity + FE capability. Charges only when a lightning rod sits on top and a bolt hits. Mekanism cables can interact.
 - Item form is a plain block item; no inventory charging anymore.
 - Basic blockstate/model/loot/lang in `assets/heavy_storms/*`. Placeholder visuals still use vanilla copper textures.

@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[4,)"
+loaderVersion="[47,)"
 license="MIT"
 issueTrackerURL="https://example.com/heavy-storms/issues"
 
@@ -16,15 +16,15 @@ Supercharge thunderstorms and channel lightning into Forge Energy.
 '''
 
 [[dependencies.heavy_storms]]
-modId="neoforge"
+modId="forge"
 mandatory=true
-versionRange="[21.1.0,)"
+versionRange="[47.2.0,)"
 ordering="AFTER"
 side="BOTH"
 
 [[dependencies.heavy_storms]]
 modId="minecraft"
 mandatory=true
-versionRange="[1.21.1]"
+versionRange="[1.20.1]"
 ordering="NONE"
 side="BOTH"

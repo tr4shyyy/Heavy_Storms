@@ -1,20 +1,20 @@
 ![Heavy Storms Preview](https://github.com/tr4shyyy/Heavy_Storms/blob/master/Heavy_storms_1.gif?raw=true)
 
-# Heavy Storms (NeoForge 1.21.1)
+# Heavy Storms (Forge 1.20.1)
 
-Heavy Storms amplifies thunderstorms and introduces a Forge Energy compatible Lightning Capacitor block for Minecraft 1.21.1 using NeoForge.
+Heavy Storms amplifies thunderstorms and introduces a Forge Energy compatible Lightning Capacitor block for Minecraft 1.20.1 using Forge.
 
 ## Features
 
 - Spawns additional lightning strikes around players during thunderstorms with configurable frequency and radius.
 - Adds the Lightning Capacitor block that only charges when placed with a lightning rod mounted on top, gaining FE from real lightning strikes.
-- Exposes Forge Energy via the modern NeoForge capability system so automation mods (e.g., Mekanism universal cables) can interact with the capacitor.
+- Exposes Forge Energy via the standard Forge capability system so automation mods (e.g., Mekanism universal cables) can interact with the capacitor.
 
 ## Building & Development
 
 Prerequisites:
 
-- JDK 21 (matching Mojang's requirement for 1.21+)
+- JDK 17 (matching Mojang's requirement for 1.20.1)
 - Gradle is bundled via the wrapper; no local installation needed.
 
 Common commands run from the project root:
@@ -25,7 +25,7 @@ Common commands run from the project root:
 ./gradlew build             # builds the mod jar under build/libs
 ```
 
-The default run configurations download NeoForge `21.1.210` automatically on first launch.
+The default run configurations download Forge `1.20.1-47.2.0` automatically on first launch.
 
 ## Configuration
 
@@ -33,9 +33,9 @@ A server-side config file `heavy_storms-server.toml` (created after the first ru
 
 | Key | Description | Default |
 | --- | --- | --- |
-| `lightning.extraAttemptsPerTick` | Extra lightning attempts each tick during thunderstorms | `3` |
-| `lightning.extraStrikeChance` | Per-attempt spawn chance (0.0 - 1.0) | `0.35` |
-| `lightning.extraStrikeRadius` | Max horizontal distance from players (blocks) | `64` |
+| `lightning.extraAttemptsPerTick` | Extra lightning attempts each tick during thunderstorms | `1` |
+| `lightning.extraStrikeChance` | Per-attempt spawn chance (0.0 - 1.0) | `0.05` |
+| `lightning.extraStrikeRadius` | Max horizontal distance from players (blocks) | `128` |
 | `capacitor.capacity` | Total FE storage of the Lightning Capacitor | `1_000_000` |
 | `capacitor.maxReceive` | Max FE accepted per transfer | `20_000` |
 | `capacitor.maxExtract` | Max FE output per transfer | `20_000` |
@@ -52,9 +52,9 @@ src/main/java/com/nolyn/heavystorms/block/...            # Block registrations a
 src/main/java/com/nolyn/heavystorms/blockentity/...       # Block entity implementations
 src/main/java/com/nolyn/heavystorms/item/...             # Block item registration
 src/main/java/com/nolyn/heavystorms/world/...            # Event handlers (lightning control, charging)
-src/main/resources/META-INF/neoforge.mods.toml           # Mod metadata
+src/main/resources/META-INF/mods.toml                   # Mod metadata
 ```
 
 ## License
 
-MIT (see `license` entry in `neoforge.mods.toml`). Update this section if you choose a different license.
+MIT (see `license` entry in `mods.toml`). Update this section if you choose a different license.

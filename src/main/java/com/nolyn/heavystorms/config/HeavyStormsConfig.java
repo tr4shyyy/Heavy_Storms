@@ -1,20 +1,20 @@
 package com.nolyn.heavystorms.config;
 
-import net.neoforged.neoforge.common.ModConfigSpec;
+import net.minecraftforge.common.ForgeConfigSpec;
 
 public final class HeavyStormsConfig {
-    public static final ModConfigSpec SERVER_SPEC;
+    public static final ForgeConfigSpec SERVER_SPEC;
 
-    public static final ModConfigSpec.IntValue EXTRA_LIGHTNING_ATTEMPTS;
-    public static final ModConfigSpec.DoubleValue EXTRA_LIGHTNING_CHANCE;
-    public static final ModConfigSpec.IntValue LIGHTNING_RADIUS;
-    public static final ModConfigSpec.IntValue CAPACITOR_CAPACITY;
-    public static final ModConfigSpec.IntValue CAPACITOR_MAX_RECEIVE;
-    public static final ModConfigSpec.IntValue CAPACITOR_MAX_EXTRACT;
-    public static final ModConfigSpec.IntValue CAPACITOR_CHARGE_PER_STRIKE;
+    public static final ForgeConfigSpec.IntValue EXTRA_LIGHTNING_ATTEMPTS;
+    public static final ForgeConfigSpec.DoubleValue EXTRA_LIGHTNING_CHANCE;
+    public static final ForgeConfigSpec.IntValue LIGHTNING_RADIUS;
+    public static final ForgeConfigSpec.IntValue CAPACITOR_CAPACITY;
+    public static final ForgeConfigSpec.IntValue CAPACITOR_MAX_RECEIVE;
+    public static final ForgeConfigSpec.IntValue CAPACITOR_MAX_EXTRACT;
+    public static final ForgeConfigSpec.IntValue CAPACITOR_CHARGE_PER_STRIKE;
 
     static {
-        ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
+        ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 
         builder.comment("Controls the intensity of thunder storms.").push("lightning");
         EXTRA_LIGHTNING_ATTEMPTS = builder

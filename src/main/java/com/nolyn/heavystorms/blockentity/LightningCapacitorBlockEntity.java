@@ -3,13 +3,15 @@ package com.nolyn.heavystorms.blockentity;
 import com.nolyn.heavystorms.config.HeavyStormsConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.energy.IEnergyStorage;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.Nullable;
 
 public class LightningCapacitorBlockEntity extends BlockEntity {
@@ -78,6 +80,8 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
             return HeavyStormsConfig.CAPACITOR_MAX_RECEIVE.get() > 0;
         }
     };
+
+    private LazyOptional<IEnergyStorage> energyCapability = LazyOptional.of(() -> storage);
 
     public LightningCapacitorBlockEntity(BlockPos pos, BlockState state) {
         this(HeavyStormsBlockEntities.LIGHTNING_CAPACITOR.get(), pos, state);
@@ -153,15 +157,35 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
+    public <T> LazyOptional<T> getCapability(Capability<T> cap, @Nullable Direction side) {
+        if (cap == ForgeCapabilities.ENERGY) {
+            return energyCapability.cast();
+        }
+        return super.getCapability(cap, side);
+    }
+
+    @Override
+    public void invalidateCaps() {
+        super.invalidateCaps();
+        energyCapability.invalidate();
+    }
+
+    @Override
+    public void reviveCaps() {
+        super.reviveCaps();
+        energyCapability = LazyOptional.of(() -> storage);
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
         tag.putInt(ENERGY_NBT_KEY, getEnergyStoredInternal());
         tag.putInt(STRIKE_TICKS_NBT_KEY, strikeTicks);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
+    public void load(CompoundTag tag) {
+        super.load(tag);
         energy = tag.getInt(ENERGY_NBT_KEY);
         strikeTicks = tag.getInt(STRIKE_TICKS_NBT_KEY);
     }

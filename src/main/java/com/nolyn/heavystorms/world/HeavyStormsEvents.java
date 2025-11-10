@@ -14,10 +14,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.block.Blocks;
-import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
-import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import org.jetbrains.annotations.Nullable;
 
 public final class HeavyStormsEvents {
@@ -25,8 +25,12 @@ public final class HeavyStormsEvents {
 
     private HeavyStormsEvents() {}
 
-    public static void onLevelTick(final LevelTickEvent.Post event) {
-        Level level = event.getLevel();
+    public static void onLevelTick(final TickEvent.LevelTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) {
+            return;
+        }
+
+        Level level = event.level;
         if (!(level instanceof ServerLevel serverLevel)) {
             return;
         }
