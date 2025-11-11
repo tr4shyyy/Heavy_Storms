@@ -17,8 +17,7 @@ public final class HeavyStormsBlocks {
             () -> new LightningCapacitorBlock(
                     BlockBehaviour.Properties.of()
                             .mapColor(MapColor.COLOR_ORANGE)
-                            .strength(4.0F, 6.0F)
-                            .requiresCorrectToolForDrops()
+                            .strength(3.0F, 6.0F)
                             .sound(SoundType.COPPER)
             )
     );

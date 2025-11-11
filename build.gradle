@@ -7,7 +7,7 @@ plugins {
 }
 
 group = 'com.nolyn.heavystorms'
-version = '0.3.0'
+version = '0.4.0'
 
 base {
     archivesName = 'heavy_storms'
@@ -54,4 +54,21 @@ userDevRuntime.maybeCreate {
     withForgeName("neoforge")
     withForgeVersion("21.1.210")
     withDistributionType(DistributionType.JOINED)
+	
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+        resources {
+            srcDir 'src/main/resources'
+        }
+    }
+}
+	
+
+tasks.withType(ProcessResources).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 }
