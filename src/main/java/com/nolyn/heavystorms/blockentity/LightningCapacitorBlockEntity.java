@@ -11,14 +11,30 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.Nullable;
+import software.bernie.geckolib.animatable.GeoBlockEntity;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager.ControllerRegistrar;
+import software.bernie.geckolib.animation.Animation;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
-public class LightningCapacitorBlockEntity extends BlockEntity {
+public class LightningCapacitorBlockEntity extends BlockEntity implements GeoBlockEntity {
     private static final String ENERGY_NBT_KEY = "Energy";
     private static final String STRIKE_TICKS_NBT_KEY = "StrikeTicks";
+    private static final String GLOW_INTENSITY_NBT_KEY = "GlowIntensity";
     private static final int STRIKE_FLASH_DURATION_TICKS = 40;
+    private static final float GLOW_DECAY_RATE = 0.02F;
+    private static final String FLASH_CONTROLLER_NAME = "flash_controller";
+    private static final String FLASH_ANIMATION_NAME = "flash";
+    private static final RawAnimation FLASH_ANIMATION = RawAnimation.begin().then(FLASH_ANIMATION_NAME, Animation.LoopType.PLAY_ONCE);
 
     private int energy;
     private int strikeTicks;
+    private float glowIntensity;
+
+    private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
 
     private final IEnergyStorage storage = new IEnergyStorage() {
         @Override
@@ -80,7 +96,7 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
     };
 
     public LightningCapacitorBlockEntity(BlockPos pos, BlockState state) {
-        this(HeavyStormsBlockEntities.LIGHTNING_CAPACITOR.get(), pos, state);
+        this(ModBlockEntities.LIGHTNING_CAPACITOR_BE.get(), pos, state);
     }
 
     protected LightningCapacitorBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -107,6 +123,15 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
         return energyAccepted;
     }
 
+    public void triggerGlowFlash() {
+        glowIntensity = 1.0F;
+        triggerAnim(FLASH_CONTROLLER_NAME, FLASH_ANIMATION_NAME);
+        Level level = getLevel();
+        if (level != null && !level.isClientSide) {
+            setChangedAndNotify();
+        }
+    }
+
     public boolean isRecentlyStruck() {
         return strikeTicks > 0;
     }
@@ -118,6 +143,10 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
         return Math.max(0.0F, (strikeTicks - partialTick) / (float) STRIKE_FLASH_DURATION_TICKS);
     }
 
+    public float getGlowIntensity() {
+        return glowIntensity;
+    }
+
     public static void tick(Level level, BlockPos pos, BlockState state, LightningCapacitorBlockEntity blockEntity) {
         blockEntity.tick(level);
     }
@@ -126,6 +155,12 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
         if (strikeTicks > 0) {
             strikeTicks--;
             if (!level.isClientSide && strikeTicks == 0) {
+                setChanged();
+            }
+        }
+        if (glowIntensity > 0.0F) {
+            glowIntensity = Math.max(0.0F, glowIntensity - GLOW_DECAY_RATE);
+            if (!level.isClientSide && glowIntensity == 0.0F) {
                 setChanged();
             }
         }
@@ -157,6 +192,7 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
         super.saveAdditional(tag, registries);
         tag.putInt(ENERGY_NBT_KEY, getEnergyStoredInternal());
         tag.putInt(STRIKE_TICKS_NBT_KEY, strikeTicks);
+        tag.putFloat(GLOW_INTENSITY_NBT_KEY, glowIntensity);
     }
 
     @Override
@@ -164,5 +200,19 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
         super.loadAdditional(tag, registries);
         energy = tag.getInt(ENERGY_NBT_KEY);
         strikeTicks = tag.getInt(STRIKE_TICKS_NBT_KEY);
+        glowIntensity = tag.contains(GLOW_INTENSITY_NBT_KEY) ? tag.getFloat(GLOW_INTENSITY_NBT_KEY) : 0.0F;
+    }
+
+    @Override
+    public void registerControllers(ControllerRegistrar controllers) {
+        controllers.add(
+                new AnimationController<>(this, FLASH_CONTROLLER_NAME, 0, state -> PlayState.STOP)
+                        .triggerableAnim(FLASH_ANIMATION_NAME, FLASH_ANIMATION)
+        );
+    }
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return animationCache;
     }
 }

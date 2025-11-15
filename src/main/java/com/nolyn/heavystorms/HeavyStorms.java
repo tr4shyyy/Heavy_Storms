@@ -1,7 +1,7 @@
 package com.nolyn.heavystorms;
 
-import com.nolyn.heavystorms.block.HeavyStormsBlocks;
-import com.nolyn.heavystorms.blockentity.HeavyStormsBlockEntities;
+import com.nolyn.heavystorms.block.ModBlocks;
+import com.nolyn.heavystorms.blockentity.ModBlockEntities;
 import com.nolyn.heavystorms.capability.HeavyStormsCapabilities;
 import com.nolyn.heavystorms.config.HeavyStormsConfig;
 import com.nolyn.heavystorms.item.HeavyStormsItems;
@@ -20,8 +20,8 @@ public final class HeavyStorms {
     public static final String MOD_ID = "heavy_storms";
 
     public HeavyStorms(IEventBus modEventBus, ModContainer modContainer) {
-        HeavyStormsBlocks.BLOCKS.register(modEventBus);
-        HeavyStormsBlockEntities.BLOCK_ENTITIES.register(modEventBus);
+        ModBlocks.BLOCKS.register(modEventBus);
+        ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);
         HeavyStormsItems.ITEMS.register(modEventBus);
 
         modEventBus.addListener(HeavyStorms::onCommonSetup);

@@ -1,6 +1,6 @@
 package com.nolyn.heavystorms.capability;
 
-import com.nolyn.heavystorms.block.HeavyStormsBlocks;
+import com.nolyn.heavystorms.block.ModBlocks;
 import com.nolyn.heavystorms.blockentity.LightningCapacitorBlockEntity;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
@@ -12,7 +12,7 @@ public final class HeavyStormsCapabilities {
                 (level, pos, state, blockEntity, direction) -> blockEntity instanceof LightningCapacitorBlockEntity capacitor
                         ? capacitor.getEnergyStorage(direction)
                         : null,
-                HeavyStormsBlocks.LIGHTNING_CAPACITOR.get()
+                ModBlocks.LIGHTNING_CAPACITOR.get()
         );
     }
 

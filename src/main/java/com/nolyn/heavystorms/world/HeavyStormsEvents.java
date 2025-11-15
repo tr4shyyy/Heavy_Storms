@@ -1,6 +1,6 @@
 package com.nolyn.heavystorms.world;
 
-import com.nolyn.heavystorms.block.HeavyStormsBlocks;
+import com.nolyn.heavystorms.block.ModBlocks;
 import com.nolyn.heavystorms.blockentity.LightningCapacitorBlockEntity;
 import com.nolyn.heavystorms.config.HeavyStormsConfig;
 import java.util.Collections;
@@ -14,14 +14,15 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import org.jetbrains.annotations.Nullable;
 
 public final class HeavyStormsEvents {
     private static final Set<LightningBolt> TRACKED_LIGHTNING = Collections.newSetFromMap(new WeakHashMap<LightningBolt, Boolean>());
+    private static final int MAX_CAPACITOR_COLUMN_SCAN_DEPTH = 6;
 
     private HeavyStormsEvents() {}
 
@@ -75,9 +76,10 @@ public final class HeavyStormsEvents {
             BlockPos rodPos = findStruckLightningRod(level, strikePos);
             if (rodPos != null) {
                 BlockPos capacitorPos = rodPos.below();
-                if (level.getBlockState(capacitorPos).is(HeavyStormsBlocks.LIGHTNING_CAPACITOR.get())
+                if (level.getBlockState(capacitorPos).is(ModBlocks.LIGHTNING_CAPACITOR.get())
                         && level.getBlockEntity(capacitorPos) instanceof LightningCapacitorBlockEntity capacitor) {
                     capacitor.addEnergy(HeavyStormsConfig.CAPACITOR_CHARGE_PER_STRIKE.get());
+                    LightningStrikeUtil.triggerGlowFlash(level, capacitorPos);
                 }
                 iterator.remove();
                 continue;
@@ -120,10 +122,11 @@ public final class HeavyStormsEvents {
         if (!(event.getEntity() instanceof LightningBolt lightning)) {
             return;
         }
-        if (!(event.getLevel() instanceof ServerLevel)) {
+        if (!(event.getLevel() instanceof ServerLevel serverLevel)) {
             return;
         }
 
+        redirectLightningToCapacitor(serverLevel, lightning);
         TRACKED_LIGHTNING.add(lightning);
     }
 
@@ -136,5 +139,61 @@ public final class HeavyStormsEvents {
             }
         }
         return null;
+    }
+
+    private static void redirectLightningToCapacitor(ServerLevel level, LightningBolt lightning) {
+        int radius = Math.max(1, HeavyStormsConfig.CAPACITOR_ROD_ATTRACTION_RADIUS.get());
+        BlockPos lightningPos = BlockPos.containing(lightning.getX(), lightning.getY(), lightning.getZ());
+        BlockPos rodPos = findNearbyCapacitorRod(level, lightningPos, radius);
+        if (rodPos != null) {
+            lightning.setPos(rodPos.getX() + 0.5D, rodPos.getY(), rodPos.getZ() + 0.5D);
+        }
+    }
+
+    @Nullable
+    private static BlockPos findNearbyCapacitorRod(ServerLevel level, BlockPos center, int radius) {
+        BlockPos closest = null;
+        double closestDistance = Double.MAX_VALUE;
+
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+        BlockPos.MutableBlockPos belowPos = new BlockPos.MutableBlockPos();
+
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dz = -radius; dz <= radius; dz++) {
+                BlockPos column = center.offset(dx, 0, dz);
+                if (!level.isAreaLoaded(column, 1)) {
+                    continue;
+                }
+                BlockPos top = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column);
+                for (int depth = 0; depth <= MAX_CAPACITOR_COLUMN_SCAN_DEPTH; depth++) {
+                    int checkY = top.getY() - depth;
+                    if (checkY < level.getMinBuildHeight()) {
+                        break;
+                    }
+                    mutablePos.set(top.getX(), checkY, top.getZ());
+                    if (!level.getBlockState(mutablePos).is(Blocks.LIGHTNING_ROD)) {
+                        continue;
+                    }
+                    belowPos.set(mutablePos.getX(), mutablePos.getY() - 1, mutablePos.getZ());
+                    if (belowPos.getY() < level.getMinBuildHeight()) {
+                        continue;
+                    }
+                    if (!level.getBlockState(belowPos).is(ModBlocks.LIGHTNING_CAPACITOR.get())) {
+                        continue;
+                    }
+                    if (!level.canSeeSky(mutablePos)) {
+                        continue;
+                    }
+                    double distance = mutablePos.distSqr(center);
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closest = mutablePos.immutable();
+                    }
+                    break;
+                }
+            }
+        }
+
+        return closest;
     }
 }

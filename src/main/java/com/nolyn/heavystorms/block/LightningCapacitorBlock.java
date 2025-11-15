@@ -1,7 +1,7 @@
 package com.nolyn.heavystorms.block;
 
-import com.nolyn.heavystorms.blockentity.HeavyStormsBlockEntities;
 import com.nolyn.heavystorms.blockentity.LightningCapacitorBlockEntity;
+import com.nolyn.heavystorms.blockentity.ModBlockEntities;
 import com.nolyn.heavystorms.item.HeavyStormsItems;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -30,13 +30,13 @@ public class LightningCapacitorBlock extends Block implements EntityBlock {
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return type == HeavyStormsBlockEntities.LIGHTNING_CAPACITOR.get()
+        return type == ModBlockEntities.LIGHTNING_CAPACITOR_BE.get()
                 ? (lvl, pos, blockState, blockEntity) -> LightningCapacitorBlockEntity.tick(lvl, pos, blockState, (LightningCapacitorBlockEntity) blockEntity)
                 : null;
     }

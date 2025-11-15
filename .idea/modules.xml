@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/Heavy_Storms.iml" filepath="$PROJECT_DIR$/.idea/Heavy_Storms.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/HeavyStorms.main.iml" filepath="$PROJECT_DIR$/.idea/modules/HeavyStorms.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/HeavyStorms.test.iml" filepath="$PROJECT_DIR$/.idea/modules/HeavyStorms.test.iml" />
     </modules>
   </component>
 </project>
