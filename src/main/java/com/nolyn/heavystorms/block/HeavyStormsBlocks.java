@@ -19,6 +19,7 @@ public final class HeavyStormsBlocks {
                             .mapColor(MapColor.COLOR_ORANGE)
                             .strength(3.0F, 6.0F)
                             .sound(SoundType.COPPER)
+                            .noOcclusion()
             )
     );
 
