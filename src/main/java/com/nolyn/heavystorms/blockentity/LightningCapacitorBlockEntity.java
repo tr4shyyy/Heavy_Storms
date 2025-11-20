@@ -5,6 +5,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -15,10 +19,13 @@ import org.jetbrains.annotations.Nullable;
 public class LightningCapacitorBlockEntity extends BlockEntity {
     private static final String ENERGY_NBT_KEY = "Energy";
     private static final String STRIKE_TICKS_NBT_KEY = "StrikeTicks";
+    private static final String CONNECTION_TICKS_NBT_KEY = "ConnectionTicks";
     private static final int STRIKE_FLASH_DURATION_TICKS = 40;
+    private static final int CONNECTION_FLASH_DURATION_TICKS = 20;
 
     private int energy;
     private int strikeTicks;
+    private int connectionTicks;
 
     private final IEnergyStorage storage = new IEnergyStorage() {
         @Override
@@ -26,6 +33,7 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
             if (!canReceive() || maxReceive <= 0) {
                 return 0;
             }
+            flagConnectionActivity();
             int capacity = getCapacity();
             int energyStored = getEnergyStoredInternal();
             int receiveLimit = Math.min(HeavyStormsConfig.CAPACITOR_MAX_RECEIVE.get(), maxReceive);
@@ -45,6 +53,7 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
             if (!canExtract() || maxExtract <= 0) {
                 return 0;
             }
+            flagConnectionActivity();
             int energyStored = getEnergyStoredInternal();
             int extractLimit = Math.min(HeavyStormsConfig.CAPACITOR_MAX_EXTRACT.get(), maxExtract);
             int energyRemoved = Math.min(energyStored, extractLimit);
@@ -129,6 +138,12 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
                 setChanged();
             }
         }
+        if (connectionTicks > 0) {
+            connectionTicks--;
+            if (!level.isClientSide && connectionTicks == 0) {
+                setChangedAndNotify();
+            }
+        }
     }
 
     private int getEnergyStoredInternal() {
@@ -152,11 +167,25 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
         }
     }
 
+    public boolean shouldDisplayLeds() {
+        return energy > 0 || connectionTicks > 0;
+    }
+
+    private void flagConnectionActivity() {
+        if (connectionTicks == 0) {
+            connectionTicks = CONNECTION_FLASH_DURATION_TICKS;
+            setChangedAndNotify();
+        } else {
+            connectionTicks = CONNECTION_FLASH_DURATION_TICKS;
+        }
+    }
+
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         tag.putInt(ENERGY_NBT_KEY, getEnergyStoredInternal());
         tag.putInt(STRIKE_TICKS_NBT_KEY, strikeTicks);
+        tag.putInt(CONNECTION_TICKS_NBT_KEY, connectionTicks);
     }
 
     @Override
@@ -164,5 +193,21 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
         super.loadAdditional(tag, registries);
         energy = tag.getInt(ENERGY_NBT_KEY);
         strikeTicks = tag.getInt(STRIKE_TICKS_NBT_KEY);
+        connectionTicks = tag.getInt(CONNECTION_TICKS_NBT_KEY);
+    }
+
+    @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        return saveWithoutMetadata(registries);
+    }
+
+    @Override
+    public void onDataPacket(Connection connection, ClientboundBlockEntityDataPacket packet, HolderLookup.Provider registries) {
+        loadAdditional(packet.getTag(), registries);
+    }
+
+    @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 }

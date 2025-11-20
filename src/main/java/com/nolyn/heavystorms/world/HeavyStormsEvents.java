@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.WeakHashMap;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.BlockPos.MutableBlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
@@ -22,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 
 public final class HeavyStormsEvents {
     private static final Set<LightningBolt> TRACKED_LIGHTNING = Collections.newSetFromMap(new WeakHashMap<LightningBolt, Boolean>());
+    private static final int ROD_CAPTURE_RADIUS = 2;
+    private static final int ROD_ATTRACTION_RADIUS = 3;
 
     private HeavyStormsEvents() {}
 
@@ -99,6 +102,11 @@ public final class HeavyStormsEvents {
                 continue;
             }
 
+            BlockPos rodTarget = findNearbyCapacitorRod(level, strikePos, ROD_ATTRACTION_RADIUS);
+            if (rodTarget != null) {
+                strikePos = rodTarget;
+            }
+
             if (spawnLightningBolt(level, strikePos)) {
                 return;
             }
@@ -129,10 +137,34 @@ public final class HeavyStormsEvents {
 
     @Nullable
     private static BlockPos findStruckLightningRod(ServerLevel level, BlockPos strikePos) {
+        MutableBlockPos cursor = new MutableBlockPos();
         for (int dy = 1; dy >= -2; dy--) {
-            BlockPos checkPos = strikePos.offset(0, dy, 0);
-            if (level.getBlockState(checkPos).is(Blocks.LIGHTNING_ROD)) {
-                return checkPos;
+            for (int dx = -ROD_CAPTURE_RADIUS; dx <= ROD_CAPTURE_RADIUS; dx++) {
+                for (int dz = -ROD_CAPTURE_RADIUS; dz <= ROD_CAPTURE_RADIUS; dz++) {
+                    cursor.set(strikePos.getX() + dx, strikePos.getY() + dy, strikePos.getZ() + dz);
+                    if (level.getBlockState(cursor).is(Blocks.LIGHTNING_ROD)) {
+                        return cursor.immutable();
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private static BlockPos findNearbyCapacitorRod(ServerLevel level, BlockPos center, int horizontalRadius) {
+        MutableBlockPos cursor = new MutableBlockPos();
+        for (int dx = -horizontalRadius; dx <= horizontalRadius; dx++) {
+            for (int dz = -horizontalRadius; dz <= horizontalRadius; dz++) {
+                for (int dy = -2; dy <= 2; dy++) {
+                    cursor.set(center.getX() + dx, center.getY() + dy, center.getZ() + dz);
+                    if (level.getBlockState(cursor).is(Blocks.LIGHTNING_ROD)) {
+                        BlockPos below = cursor.below();
+                        if (level.getBlockState(below).is(HeavyStormsBlocks.LIGHTNING_CAPACITOR.get())) {
+                            return cursor.immutable();
+                        }
+                    }
+                }
             }
         }
         return null;

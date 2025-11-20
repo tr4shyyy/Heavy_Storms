@@ -6,6 +6,7 @@ import com.nolyn.heavystorms.capability.HeavyStormsCapabilities;
 import com.nolyn.heavystorms.config.HeavyStormsConfig;
 import com.nolyn.heavystorms.item.HeavyStormsItems;
 import com.nolyn.heavystorms.world.HeavyStormsEvents;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -42,5 +43,9 @@ public final class HeavyStorms {
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
             event.accept(HeavyStormsItems.LIGHTNING_CAPACITOR.get());
         }
+    }
+
+    public static ResourceLocation id(String path) {
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
 }
