@@ -23,8 +23,10 @@ import org.jetbrains.annotations.Nullable;
 
 public final class HeavyStormsEvents {
     private static final Set<LightningBolt> TRACKED_LIGHTNING = Collections.newSetFromMap(new WeakHashMap<LightningBolt, Boolean>());
-    private static final int ROD_CAPTURE_RADIUS = 2;
-    private static final int ROD_ATTRACTION_RADIUS = 3;
+    private static final int CAPACITOR_CAPTURE_RADIUS = 6;
+    private static final int CAPACITOR_ATTRACTION_RADIUS = 24;
+    private static final int FIRE_EXTINGUISH_HORIZONTAL_RADIUS = 1;
+    private static final int FIRE_EXTINGUISH_VERTICAL_RADIUS = 1;
 
     private HeavyStormsEvents() {}
 
@@ -75,13 +77,10 @@ public final class HeavyStormsEvents {
             }
 
             BlockPos strikePos = BlockPos.containing(lightning.getX(), lightning.getY() - 1.0E-6D, lightning.getZ());
-            BlockPos rodPos = findStruckLightningRod(level, strikePos);
-            if (rodPos != null) {
-                BlockPos capacitorPos = rodPos.below();
-                if (level.getBlockState(capacitorPos).is(HeavyStormsBlocks.LIGHTNING_CAPACITOR.get())
-                        && level.getBlockEntity(capacitorPos) instanceof LightningCapacitorBlockEntity capacitor) {
-                    capacitor.addEnergy(HeavyStormsConfig.CAPACITOR_CHARGE_PER_STRIKE.get());
-                }
+            BlockPos capacitorPos = findStruckCapacitor(level, strikePos);
+            if (capacitorPos != null && level.getBlockEntity(capacitorPos) instanceof LightningCapacitorBlockEntity capacitor) {
+                capacitor.addEnergy(HeavyStormsConfig.CAPACITOR_CHARGE_PER_STRIKE.get());
+                extinguishLightningFire(level, capacitorPos, strikePos);
                 iterator.remove();
                 continue;
             }
@@ -102,9 +101,12 @@ public final class HeavyStormsEvents {
                 continue;
             }
 
-            BlockPos rodTarget = findNearbyCapacitorRod(level, strikePos, ROD_ATTRACTION_RADIUS);
-            if (rodTarget != null) {
-                strikePos = rodTarget;
+            BlockPos capacitorTarget = findNearbyCapacitorTarget(level, strikePos, CAPACITOR_ATTRACTION_RADIUS);
+            if (capacitorTarget != null) {
+                strikePos = capacitorTarget;
+                if (!level.canSeeSky(strikePos)) {
+                    continue;
+                }
             }
 
             if (spawnLightningBolt(level, strikePos)) {
@@ -128,22 +130,34 @@ public final class HeavyStormsEvents {
         if (!(event.getEntity() instanceof LightningBolt lightning)) {
             return;
         }
-        if (!(event.getLevel() instanceof ServerLevel)) {
+        if (!(event.getLevel() instanceof ServerLevel serverLevel)) {
             return;
+        }
+
+        BlockPos spawnPos = BlockPos.containing(lightning.getX(), lightning.getY(), lightning.getZ());
+        BlockPos capacitorTarget = findNearbyCapacitorTarget(serverLevel, spawnPos, CAPACITOR_ATTRACTION_RADIUS);
+        if (capacitorTarget != null && serverLevel.canSeeSky(capacitorTarget)) {
+            lightning.moveTo(capacitorTarget.getX() + 0.5D, capacitorTarget.getY(), capacitorTarget.getZ() + 0.5D);
         }
 
         TRACKED_LIGHTNING.add(lightning);
     }
 
     @Nullable
-    private static BlockPos findStruckLightningRod(ServerLevel level, BlockPos strikePos) {
+    private static BlockPos findStruckCapacitor(ServerLevel level, BlockPos strikePos) {
         MutableBlockPos cursor = new MutableBlockPos();
         for (int dy = 1; dy >= -2; dy--) {
-            for (int dx = -ROD_CAPTURE_RADIUS; dx <= ROD_CAPTURE_RADIUS; dx++) {
-                for (int dz = -ROD_CAPTURE_RADIUS; dz <= ROD_CAPTURE_RADIUS; dz++) {
+            for (int dx = -CAPACITOR_CAPTURE_RADIUS; dx <= CAPACITOR_CAPTURE_RADIUS; dx++) {
+                for (int dz = -CAPACITOR_CAPTURE_RADIUS; dz <= CAPACITOR_CAPTURE_RADIUS; dz++) {
                     cursor.set(strikePos.getX() + dx, strikePos.getY() + dy, strikePos.getZ() + dz);
-                    if (level.getBlockState(cursor).is(Blocks.LIGHTNING_ROD)) {
+                    if (level.getBlockState(cursor).is(HeavyStormsBlocks.LIGHTNING_CAPACITOR.get())) {
                         return cursor.immutable();
+                    }
+                    if (level.getBlockState(cursor).is(Blocks.LIGHTNING_ROD)) {
+                        BlockPos below = cursor.below();
+                        if (level.getBlockState(below).is(HeavyStormsBlocks.LIGHTNING_CAPACITOR.get())) {
+                            return below.immutable();
+                        }
                     }
                 }
             }
@@ -152,12 +166,15 @@ public final class HeavyStormsEvents {
     }
 
     @Nullable
-    private static BlockPos findNearbyCapacitorRod(ServerLevel level, BlockPos center, int horizontalRadius) {
+    private static BlockPos findNearbyCapacitorTarget(ServerLevel level, BlockPos center, int horizontalRadius) {
         MutableBlockPos cursor = new MutableBlockPos();
         for (int dx = -horizontalRadius; dx <= horizontalRadius; dx++) {
             for (int dz = -horizontalRadius; dz <= horizontalRadius; dz++) {
-                for (int dy = -2; dy <= 2; dy++) {
+                for (int dy = -6; dy <= 6; dy++) {
                     cursor.set(center.getX() + dx, center.getY() + dy, center.getZ() + dz);
+                    if (level.getBlockState(cursor).is(HeavyStormsBlocks.LIGHTNING_CAPACITOR.get())) {
+                        return cursor.above().immutable();
+                    }
                     if (level.getBlockState(cursor).is(Blocks.LIGHTNING_ROD)) {
                         BlockPos below = cursor.below();
                         if (level.getBlockState(below).is(HeavyStormsBlocks.LIGHTNING_CAPACITOR.get())) {
@@ -168,5 +185,26 @@ public final class HeavyStormsEvents {
             }
         }
         return null;
+    }
+
+    private static void extinguishLightningFire(ServerLevel level, BlockPos capacitorPos, BlockPos strikePos) {
+        // Clear fire spawned by lightning directly on top of the capacitor and nearby strike tiles.
+        removeFireCube(level, capacitorPos, FIRE_EXTINGUISH_HORIZONTAL_RADIUS, FIRE_EXTINGUISH_VERTICAL_RADIUS);
+        removeFireCube(level, strikePos, FIRE_EXTINGUISH_HORIZONTAL_RADIUS, FIRE_EXTINGUISH_VERTICAL_RADIUS);
+        removeFireCube(level, capacitorPos.above(), FIRE_EXTINGUISH_HORIZONTAL_RADIUS, FIRE_EXTINGUISH_VERTICAL_RADIUS);
+    }
+
+    private static void removeFireCube(ServerLevel level, BlockPos center, int horizontalRadius, int verticalRadius) {
+        MutableBlockPos cursor = new MutableBlockPos();
+        for (int dx = -horizontalRadius; dx <= horizontalRadius; dx++) {
+            for (int dz = -horizontalRadius; dz <= horizontalRadius; dz++) {
+                for (int dy = -verticalRadius; dy <= verticalRadius; dy++) {
+                    cursor.set(center.getX() + dx, center.getY() + dy, center.getZ() + dz);
+                    if (level.getBlockState(cursor).is(Blocks.FIRE)) {
+                        level.removeBlock(cursor, false);
+                    }
+                }
+            }
+        }
     }
 }

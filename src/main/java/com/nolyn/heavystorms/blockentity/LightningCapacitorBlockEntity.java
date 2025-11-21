@@ -13,6 +13,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.util.Mth;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,12 +21,15 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
     private static final String ENERGY_NBT_KEY = "Energy";
     private static final String STRIKE_TICKS_NBT_KEY = "StrikeTicks";
     private static final String CONNECTION_TICKS_NBT_KEY = "ConnectionTicks";
-    private static final int STRIKE_FLASH_DURATION_TICKS = 40;
+    private static final int STRIKE_FLASH_DURATION_TICKS = 120;
     private static final int CONNECTION_FLASH_DURATION_TICKS = 20;
+    private static final int FIRE_CLEAR_RADIUS = 1;
 
     private int energy;
     private int strikeTicks;
     private int connectionTicks;
+    private float glowIntensity;
+    private float prevGlowIntensity;
 
     private final IEnergyStorage storage = new IEnergyStorage() {
         @Override
@@ -112,6 +116,8 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
         }
         energy = energyStored + energyAccepted;
         strikeTicks = STRIKE_FLASH_DURATION_TICKS;
+        glowIntensity = 1.0F;
+        prevGlowIntensity = 1.0F;
         setChangedAndNotify();
         return energyAccepted;
     }
@@ -121,10 +127,7 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
     }
 
     public float getStrikeIntensity(float partialTick) {
-        if (strikeTicks <= 0) {
-            return 0.0F;
-        }
-        return Math.max(0.0F, (strikeTicks - partialTick) / (float) STRIKE_FLASH_DURATION_TICKS);
+        return Mth.clamp(Mth.lerp(partialTick, prevGlowIntensity, glowIntensity), 0.0F, 1.0F);
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, LightningCapacitorBlockEntity blockEntity) {
@@ -132,6 +135,8 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
     }
 
     private void tick(Level level) {
+        prevGlowIntensity = glowIntensity;
+
         if (strikeTicks > 0) {
             strikeTicks--;
             if (!level.isClientSide && strikeTicks == 0) {
@@ -142,6 +147,33 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
             connectionTicks--;
             if (!level.isClientSide && connectionTicks == 0) {
                 setChangedAndNotify();
+            }
+        }
+        if (!level.isClientSide) {
+            extinguishNearbyFire(level);
+        }
+
+        float targetGlow = strikeTicks > 0 ? 1.0F : 0.0F;
+        float blend = strikeTicks > 0 ? 0.25F : 0.08F; // rise faster than it fades
+        glowIntensity = Mth.clamp(glowIntensity + (targetGlow - glowIntensity) * blend, 0.0F, 1.0F);
+        if (glowIntensity < 0.001F) {
+            glowIntensity = 0.0F;
+        }
+    }
+
+    private void extinguishNearbyFire(Level level) {
+        if (level == null) {
+            return;
+        }
+        BlockPos center = getBlockPos();
+        for (int dx = -FIRE_CLEAR_RADIUS; dx <= FIRE_CLEAR_RADIUS; dx++) {
+            for (int dz = -FIRE_CLEAR_RADIUS; dz <= FIRE_CLEAR_RADIUS; dz++) {
+                for (int dy = 0; dy <= FIRE_CLEAR_RADIUS; dy++) {
+                    BlockPos targetPos = center.offset(dx, dy, dz);
+                    if (level.getBlockState(targetPos).is(net.minecraft.world.level.block.Blocks.FIRE)) {
+                        level.removeBlock(targetPos, false);
+                    }
+                }
             }
         }
     }
