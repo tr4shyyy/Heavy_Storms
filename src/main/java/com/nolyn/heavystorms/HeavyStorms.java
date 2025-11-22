@@ -2,13 +2,16 @@ package com.nolyn.heavystorms;
 
 import com.nolyn.heavystorms.block.HeavyStormsBlocks;
 import com.nolyn.heavystorms.blockentity.HeavyStormsBlockEntities;
+import com.nolyn.heavystorms.client.HeavyStormsClient;
 import com.nolyn.heavystorms.config.HeavyStormsConfig;
 import com.nolyn.heavystorms.item.HeavyStormsItems;
 import com.nolyn.heavystorms.world.HeavyStormsEvents;
 import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -27,6 +30,7 @@ public final class HeavyStorms {
 
         modEventBus.addListener(HeavyStorms::onCommonSetup);
         modEventBus.addListener(this::addCreativeTabContents);
+        DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> HeavyStormsClient::initClientEvents);
 
         MinecraftForge.EVENT_BUS.addListener(HeavyStormsEvents::onLevelTick);
         MinecraftForge.EVENT_BUS.addListener(HeavyStormsEvents::onLightningSpawn);

@@ -1,0 +1,89 @@
+{
+	"format_version": "1.9.0",
+	"credit": "Made with Blockbench",
+	"parent": "minecraft:block/block",
+	"texture_size": [32, 32],
+	"textures": {
+		"1": "heavy_storms:block/lightning_capacitor_glow",
+		"particle": "heavy_storms:block/lightning_capacitor_base"
+	},
+	"elements": [
+		{
+			"name": "CORE",
+			"from": [3, 2, 3],
+			"to": [13, 16.5, 13],
+			"shade": false,
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, 0, 8]},
+			"faces": {
+				"north": {"uv": [1.875, 0.5, 5.625, 6], "rotation": 180, "texture": "#1"},
+				"east": {"uv": [2.29167, 0.5, 5.20833, 5.5], "rotation": 180, "texture": "#1"},
+				"south": {"uv": [1.875, 0.5, 5.625, 6], "rotation": 180, "texture": "#1"},
+				"west": {"uv": [2.29167, 0.5, 5.20833, 5.5], "rotation": 180, "texture": "#1"},
+				"up": {"uv": [1.5, 0.5, 6.5, 5.5], "texture": "#1"}
+			}
+		},
+		{
+			"name": "CORE",
+			"from": [4.7, 2, 13],
+			"to": [11.3, 16.5, 14],
+			"shade": false,
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, 0, 8]},
+			"faces": {
+				"north": {"uv": [2.5125, 0.5, 4.9875, 6], "rotation": 180, "texture": "#1"},
+				"east": {"uv": [5.20833, 0.5, 5.5, 5.5], "rotation": 180, "texture": "#1"},
+				"south": {"uv": [2.5125, 0.5, 4.9875, 6], "rotation": 180, "texture": "#1"},
+				"west": {"uv": [2, 0.5, 2.29167, 5.5], "rotation": 180, "texture": "#1"},
+				"up": {"uv": [2.35, 0, 5.65, 0.5], "texture": "#1"}
+			}
+		},
+		{
+			"name": "CORE",
+			"from": [4.6, 2, 2],
+			"to": [11.3, 16.5, 3],
+			"shade": false,
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, 0, 8]},
+			"faces": {
+				"north": {"uv": [2.475, 0.5, 4.9875, 6], "rotation": 180, "texture": "#1"},
+				"east": {"uv": [2, 0.5, 2.29167, 5.5], "rotation": 180, "texture": "#1"},
+				"south": {"uv": [2.5125, 0.5, 5.025, 6], "rotation": 180, "texture": "#1"},
+				"west": {"uv": [5.20833, 0.5, 5.5, 5.5], "rotation": 180, "texture": "#1"},
+				"up": {"uv": [2.3, 0, 5.65, 0.5], "texture": "#1"}
+			}
+		}
+	],
+	"display": {
+		"thirdperson_righthand": {
+			"rotation": [73, -11, 8],
+			"translation": [12, 1, 5.25]
+		},
+		"thirdperson_lefthand": {
+			"rotation": [54, -45, -2],
+			"translation": [-27, 0, 0]
+		},
+		"ground": {
+			"rotation": [3, 0, 0]
+		},
+		"gui": {
+			"translation": [0, 0.5, 0]
+		},
+		"on_shelf": {
+			"rotation": [-3, 0, 0],
+			"translation": [0.25, -1.25, 0]
+		}
+	},
+	"groups": [
+		{
+			"name": "bone",
+			"origin": [0, 0, 0],
+			"color": 2,
+			"shade": false,
+			"children": []
+		},
+		{
+			"name": "GLOWCORE",
+			"origin": [8, 0, 8],
+			"color": 0,
+			"children": [0, 1, 2]
+		}
+	]
+}

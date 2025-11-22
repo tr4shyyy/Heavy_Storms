@@ -1,7 +1,19 @@
 {
-  "variants": {
-    "": {
-      "model": "heavy_storms:block/lightning_capacitor"
+  "multipart": [
+    {
+      "apply": {
+        "model": "heavy_storms:block/lightning_capacitor_base"
+      }
+    },
+    {
+      "apply": {
+        "model": "heavy_storms:block/lightning_capacitor_led"
+      }
+    },
+    {
+      "apply": {
+        "model": "heavy_storms:block/lightning_capacitor_glow"
+      }
     }
-  }
+  ]
 }

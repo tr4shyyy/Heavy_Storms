@@ -76,15 +76,17 @@ public final class HeavyStormsEvents {
             }
 
             BlockPos strikePos = BlockPos.containing(lightning.getX(), lightning.getY() - 1.0E-6D, lightning.getZ());
-            BlockPos rodPos = findStruckLightningRod(level, strikePos);
-            if (rodPos != null) {
-                BlockPos capacitorPos = rodPos.below();
-                if (level.getBlockState(capacitorPos).is(HeavyStormsBlocks.LIGHTNING_CAPACITOR.get())
-                        && level.getBlockEntity(capacitorPos) instanceof LightningCapacitorBlockEntity capacitor) {
-                    capacitor.addEnergy(HeavyStormsConfig.CAPACITOR_CHARGE_PER_STRIKE.get());
-                }
+            BlockPos capacitorPos = findStruckCapacitor(level, strikePos);
+            if (capacitorPos != null && level.getBlockEntity(capacitorPos) instanceof LightningCapacitorBlockEntity capacitor) {
+                capacitor.addEnergy(HeavyStormsConfig.CAPACITOR_CHARGE_PER_STRIKE.get());
+                extinguishNearbyFire(level, capacitorPos);
                 iterator.remove();
                 continue;
+            }
+            // If we hit near a capacitor but missed the block exactly, still clear fire to protect the structure.
+            BlockPos nearbyCapacitor = findNearestCapacitorStrikePos(level, strikePos, 2);
+            if (nearbyCapacitor != null) {
+                extinguishNearbyFire(level, nearbyCapacitor);
             }
         }
     }
@@ -93,6 +95,11 @@ public final class HeavyStormsEvents {
         int radius = HeavyStormsConfig.LIGHTNING_RADIUS.get();
         ServerPlayer anchor = players.get(level.random.nextInt(players.size()));
         BlockPos anchorPos = anchor.blockPosition();
+
+        BlockPos capacitorStrike = findNearestCapacitorStrikePos(level, anchorPos, radius);
+        if (capacitorStrike != null && level.random.nextFloat() < 0.12F && spawnLightningBolt(level, capacitorStrike)) {
+            return;
+        }
 
         for (int attempt = 0; attempt < 4; attempt++) {
             int dx = level.random.nextInt(radius * 2 + 1) - radius;
@@ -128,17 +135,77 @@ public final class HeavyStormsEvents {
             return;
         }
 
+        ServerLevel level = (ServerLevel) event.getLevel();
+        BlockPos strikePos = BlockPos.containing(lightning.getX(), lightning.getY() - 1.0E-6D, lightning.getZ());
+        BlockPos retarget = findNearestCapacitorStrikePos(level, strikePos, 10);
+        if (retarget != null && level.random.nextFloat() < 0.05F) { // much softer pull
+            lightning.moveTo(retarget.getX() + 0.5D, retarget.getY(), retarget.getZ() + 0.5D);
+        }
+
         TRACKED_LIGHTNING.add(lightning);
     }
 
     @Nullable
-    private static BlockPos findStruckLightningRod(ServerLevel level, BlockPos strikePos) {
+    private static BlockPos findStruckCapacitor(ServerLevel level, BlockPos strikePos) {
         for (int dy = 1; dy >= -2; dy--) {
             BlockPos checkPos = strikePos.offset(0, dy, 0);
+            // Prefer a lightning rod sitting on the capacitor, but also allow the capacitor itself to act as the rod.
             if (level.getBlockState(checkPos).is(Blocks.LIGHTNING_ROD)) {
+                BlockPos below = checkPos.below();
+                if (level.getBlockState(below).is(HeavyStormsBlocks.LIGHTNING_CAPACITOR.get())) {
+                    return below;
+                }
+            } else if (level.getBlockState(checkPos).is(HeavyStormsBlocks.LIGHTNING_CAPACITOR.get())) {
                 return checkPos;
             }
         }
         return null;
+    }
+
+    @Nullable
+    private static BlockPos findNearestCapacitorStrikePos(ServerLevel level, BlockPos origin, int radius) {
+        int cappedRadius = Math.min(radius, 12); // further reduce pull radius
+        int radiusSq = cappedRadius * cappedRadius;
+        BlockPos closest = null;
+        double closestDist = Double.MAX_VALUE;
+
+        for (int dx = -cappedRadius; dx <= cappedRadius; dx++) {
+            for (int dz = -cappedRadius; dz <= cappedRadius; dz++) {
+                int x = origin.getX() + dx;
+                int z = origin.getZ() + dz;
+                BlockPos top = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(x, 0, z));
+                if (!level.canSeeSky(top)) {
+                    continue;
+                }
+                // Check top block and the one below for a capacitor.
+                for (int dy = 0; dy >= -1; dy--) {
+                    BlockPos check = top.offset(0, dy, 0);
+                    if (level.getBlockState(check).is(HeavyStormsBlocks.LIGHTNING_CAPACITOR.get())) {
+                        double dist = check.distSqr(origin);
+                        if (dist <= radiusSq && dist < closestDist) {
+                            closestDist = dist;
+                            BlockPos above = check.above();
+                            closest = level.getBlockState(above).is(Blocks.LIGHTNING_ROD) ? above : check;
+                        }
+                    }
+                }
+            }
+        }
+
+        return closest;
+    }
+
+    private static void extinguishNearbyFire(ServerLevel level, BlockPos center) {
+        int radius = 1;
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    BlockPos pos = center.offset(dx, dy, dz);
+                    if (level.getBlockState(pos).is(Blocks.FIRE)) {
+                        level.removeBlock(pos, false);
+                    }
+                }
+            }
+        }
     }
 }

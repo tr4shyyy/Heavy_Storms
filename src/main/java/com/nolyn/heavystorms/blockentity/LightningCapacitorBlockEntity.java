@@ -4,7 +4,13 @@ import com.nolyn.heavystorms.config.HeavyStormsConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -17,10 +23,17 @@ import org.jetbrains.annotations.Nullable;
 public class LightningCapacitorBlockEntity extends BlockEntity {
     private static final String ENERGY_NBT_KEY = "Energy";
     private static final String STRIKE_TICKS_NBT_KEY = "StrikeTicks";
+    private static final String CONNECTION_TICKS_NBT_KEY = "ConnectionTicks";
+    private static final String GLOW_INTENSITY_NBT_KEY = "GlowIntensity";
     private static final int STRIKE_FLASH_DURATION_TICKS = 40;
+    private static final int CONNECTION_FLASH_DURATION_TICKS = 10;
 
     private int energy;
     private int strikeTicks;
+    private int connectionFlashTicks;
+    private float prevGlowIntensity;
+    private float glowIntensity;
+    private boolean ledsVisible;
 
     private final IEnergyStorage storage = new IEnergyStorage() {
         @Override
@@ -37,6 +50,7 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
             }
             if (!simulate) {
                 energy = energyStored + energyAccepted;
+                connectionFlashTicks = CONNECTION_FLASH_DURATION_TICKS;
                 setChangedAndNotify();
             }
             return energyAccepted;
@@ -55,6 +69,7 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
             }
             if (!simulate) {
                 energy = energyStored - energyRemoved;
+                connectionFlashTicks = CONNECTION_FLASH_DURATION_TICKS;
                 setChangedAndNotify();
             }
             return energyRemoved;
@@ -107,6 +122,8 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
         }
         energy = energyStored + energyAccepted;
         strikeTicks = STRIKE_FLASH_DURATION_TICKS;
+        connectionFlashTicks = CONNECTION_FLASH_DURATION_TICKS;
+        removeNearbyFire();
         setChangedAndNotify();
         return energyAccepted;
     }
@@ -122,16 +139,80 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
         return Math.max(0.0F, (strikeTicks - partialTick) / (float) STRIKE_FLASH_DURATION_TICKS);
     }
 
+    @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        CompoundTag tag = super.getUpdateTag();
+        saveAdditional(tag);
+        return tag;
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
+        CompoundTag tag = pkt.getTag();
+        if (tag != null) {
+            load(tag);
+        }
+    }
+
     public static void tick(Level level, BlockPos pos, BlockState state, LightningCapacitorBlockEntity blockEntity) {
         blockEntity.tick(level);
     }
 
     private void tick(Level level) {
+        prevGlowIntensity = glowIntensity;
         if (strikeTicks > 0) {
             strikeTicks--;
-            if (!level.isClientSide && strikeTicks == 0) {
-                setChanged();
-            }
+        }
+        if (connectionFlashTicks > 0) {
+            connectionFlashTicks--;
+        }
+        float targetGlow = strikeTicks > 0
+                ? 1.0F
+                : (connectionFlashTicks > 0 ? 0.6F : 0.0F);
+        glowIntensity = Mth.clamp(Mth.lerp(0.25F, glowIntensity, targetGlow), 0.0F, 1.0F);
+        boolean nextLedsVisible = shouldDisplayLeds();
+
+        if (level.isClientSide) {
+            ledsVisible = nextLedsVisible;
+            return;
+        }
+
+        boolean glowTurnedOn = prevGlowIntensity <= 0.001F && glowIntensity > 0.001F;
+        boolean glowTurnedOff = prevGlowIntensity > 0.001F && glowIntensity <= 0.001F;
+        boolean ledsChanged = ledsVisible != nextLedsVisible;
+        ledsVisible = nextLedsVisible;
+        if (glowTurnedOn || glowTurnedOff || ledsChanged) {
+            setChangedAndNotify();
+        } else if (strikeTicks == 0 && connectionFlashTicks == 0 && glowIntensity == 0.0F) {
+            setChanged();
+        }
+    }
+
+    public float getGlowIntensity(float partialTick) {
+        return Mth.lerp(partialTick, prevGlowIntensity, glowIntensity);
+    }
+
+    public boolean getLedVisible() {
+        return shouldDisplayLeds();
+    }
+
+    private boolean shouldDisplayLeds() {
+        return getEnergyStoredInternal() > 0 || strikeTicks > 0 || connectionFlashTicks > 0;
+    }
+
+    private void removeNearbyFire() {
+        Level level = getLevel();
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        BlockPos above = worldPosition.above();
+        if (level.getBlockState(above).is(Blocks.FIRE)) {
+            level.removeBlock(above, false);
         }
     }
 
@@ -181,6 +262,8 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
         super.saveAdditional(tag);
         tag.putInt(ENERGY_NBT_KEY, getEnergyStoredInternal());
         tag.putInt(STRIKE_TICKS_NBT_KEY, strikeTicks);
+        tag.putInt(CONNECTION_TICKS_NBT_KEY, connectionFlashTicks);
+        tag.putFloat(GLOW_INTENSITY_NBT_KEY, glowIntensity);
     }
 
     @Override
@@ -188,5 +271,9 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
         super.load(tag);
         energy = tag.getInt(ENERGY_NBT_KEY);
         strikeTicks = tag.getInt(STRIKE_TICKS_NBT_KEY);
+        connectionFlashTicks = tag.getInt(CONNECTION_TICKS_NBT_KEY);
+        glowIntensity = tag.getFloat(GLOW_INTENSITY_NBT_KEY);
+        prevGlowIntensity = glowIntensity;
+        ledsVisible = shouldDisplayLeds();
     }
 }
