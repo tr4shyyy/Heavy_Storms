@@ -16,7 +16,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +26,7 @@ public final class HeavyStormsEvents {
     private static final int CAPACITOR_ATTRACTION_RADIUS = 24;
     private static final int FIRE_EXTINGUISH_HORIZONTAL_RADIUS = 1;
     private static final int FIRE_EXTINGUISH_VERTICAL_RADIUS = 1;
+    private static final double CAPACITOR_PULL_CHANCE = 0.25D;
 
     private HeavyStormsEvents() {}
 
@@ -92,6 +92,13 @@ public final class HeavyStormsEvents {
         ServerPlayer anchor = players.get(level.random.nextInt(players.size()));
         BlockPos anchorPos = anchor.blockPosition();
 
+        if (level.random.nextDouble() < CAPACITOR_PULL_CHANCE) {
+            BlockPos capacitorTarget = findNearbyCapacitorTarget(level, anchorPos, CAPACITOR_ATTRACTION_RADIUS);
+            if (capacitorTarget != null && spawnLightningBolt(level, capacitorTarget)) {
+                return;
+            }
+        }
+
         for (int attempt = 0; attempt < 4; attempt++) {
             int dx = level.random.nextInt(radius * 2 + 1) - radius;
             int dz = level.random.nextInt(radius * 2 + 1) - radius;
@@ -99,14 +106,6 @@ public final class HeavyStormsEvents {
             BlockPos strikePos = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, candidate);
             if (!level.isAreaLoaded(strikePos, 1) || !level.canSeeSky(strikePos)) {
                 continue;
-            }
-
-            BlockPos capacitorTarget = findNearbyCapacitorTarget(level, strikePos, CAPACITOR_ATTRACTION_RADIUS);
-            if (capacitorTarget != null) {
-                strikePos = capacitorTarget;
-                if (!level.canSeeSky(strikePos)) {
-                    continue;
-                }
             }
 
             if (spawnLightningBolt(level, strikePos)) {
@@ -135,9 +134,11 @@ public final class HeavyStormsEvents {
         }
 
         BlockPos spawnPos = BlockPos.containing(lightning.getX(), lightning.getY(), lightning.getZ());
-        BlockPos capacitorTarget = findNearbyCapacitorTarget(serverLevel, spawnPos, CAPACITOR_ATTRACTION_RADIUS);
-        if (capacitorTarget != null && serverLevel.canSeeSky(capacitorTarget)) {
-            lightning.moveTo(capacitorTarget.getX() + 0.5D, capacitorTarget.getY(), capacitorTarget.getZ() + 0.5D);
+        if (serverLevel.random.nextDouble() < CAPACITOR_PULL_CHANCE) {
+            BlockPos capacitorTarget = findNearbyCapacitorTarget(serverLevel, spawnPos, CAPACITOR_ATTRACTION_RADIUS);
+            if (capacitorTarget != null) {
+                lightning.moveTo(capacitorTarget.getX() + 0.5D, capacitorTarget.getY(), capacitorTarget.getZ() + 0.5D);
+            }
         }
 
         TRACKED_LIGHTNING.add(lightning);
@@ -152,12 +153,6 @@ public final class HeavyStormsEvents {
                     cursor.set(strikePos.getX() + dx, strikePos.getY() + dy, strikePos.getZ() + dz);
                     if (level.getBlockState(cursor).is(HeavyStormsBlocks.LIGHTNING_CAPACITOR.get())) {
                         return cursor.immutable();
-                    }
-                    if (level.getBlockState(cursor).is(Blocks.LIGHTNING_ROD)) {
-                        BlockPos below = cursor.below();
-                        if (level.getBlockState(below).is(HeavyStormsBlocks.LIGHTNING_CAPACITOR.get())) {
-                            return below.immutable();
-                        }
                     }
                 }
             }
@@ -174,12 +169,6 @@ public final class HeavyStormsEvents {
                     cursor.set(center.getX() + dx, center.getY() + dy, center.getZ() + dz);
                     if (level.getBlockState(cursor).is(HeavyStormsBlocks.LIGHTNING_CAPACITOR.get())) {
                         return cursor.above().immutable();
-                    }
-                    if (level.getBlockState(cursor).is(Blocks.LIGHTNING_ROD)) {
-                        BlockPos below = cursor.below();
-                        if (level.getBlockState(below).is(HeavyStormsBlocks.LIGHTNING_CAPACITOR.get())) {
-                            return cursor.immutable();
-                        }
                     }
                 }
             }
@@ -200,7 +189,7 @@ public final class HeavyStormsEvents {
             for (int dz = -horizontalRadius; dz <= horizontalRadius; dz++) {
                 for (int dy = -verticalRadius; dy <= verticalRadius; dy++) {
                     cursor.set(center.getX() + dx, center.getY() + dy, center.getZ() + dz);
-                    if (level.getBlockState(cursor).is(Blocks.FIRE)) {
+                    if (level.getBlockState(cursor).is(net.minecraft.world.level.block.Blocks.FIRE)) {
                         level.removeBlock(cursor, false);
                     }
                 }

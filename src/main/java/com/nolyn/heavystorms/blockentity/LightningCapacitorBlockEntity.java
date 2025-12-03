@@ -111,13 +111,19 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
         int energyStored = getEnergyStoredInternal();
         int capacity = getCapacity();
         int energyAccepted = Math.min(capacity - energyStored, amount);
-        if (energyAccepted <= 0) {
-            return 0;
+        if (energyAccepted > 0) {
+            energy = energyStored + energyAccepted;
         }
-        energy = energyStored + energyAccepted;
         strikeTicks = STRIKE_FLASH_DURATION_TICKS;
         glowIntensity = 1.0F;
         prevGlowIntensity = 1.0F;
+        Level level = getLevel();
+        if (level != null && !level.isClientSide) {
+            BlockPos abovePos = worldPosition.above();
+            if (level.getBlockState(abovePos).is(net.minecraft.world.level.block.Blocks.FIRE)) {
+                level.removeBlock(abovePos, false);
+            }
+        }
         setChangedAndNotify();
         return energyAccepted;
     }
