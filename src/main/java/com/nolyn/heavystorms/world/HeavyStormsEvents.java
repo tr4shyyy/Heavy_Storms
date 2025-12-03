@@ -97,7 +97,8 @@ public final class HeavyStormsEvents {
         BlockPos anchorPos = anchor.blockPosition();
 
         BlockPos capacitorStrike = findNearestCapacitorStrikePos(level, anchorPos, radius);
-        if (capacitorStrike != null && level.random.nextFloat() < 0.12F && spawnLightningBolt(level, capacitorStrike)) {
+        double strikeChance = HeavyStormsConfig.CAPACITOR_STRIKE_CHANCE.get();
+        if (capacitorStrike != null && level.random.nextDouble() < strikeChance && spawnLightningBolt(level, capacitorStrike)) {
             return;
         }
 
@@ -138,7 +139,8 @@ public final class HeavyStormsEvents {
         ServerLevel level = (ServerLevel) event.getLevel();
         BlockPos strikePos = BlockPos.containing(lightning.getX(), lightning.getY() - 1.0E-6D, lightning.getZ());
         BlockPos retarget = findNearestCapacitorStrikePos(level, strikePos, 10);
-        if (retarget != null && level.random.nextFloat() < 0.05F) { // much softer pull
+        double retargetChance = Math.min(1.0D, HeavyStormsConfig.CAPACITOR_STRIKE_CHANCE.get() * 0.4D); // keep retarget softer
+        if (retarget != null && level.random.nextDouble() < retargetChance) {
             lightning.moveTo(retarget.getX() + 0.5D, retarget.getY(), retarget.getZ() + 0.5D);
         }
 

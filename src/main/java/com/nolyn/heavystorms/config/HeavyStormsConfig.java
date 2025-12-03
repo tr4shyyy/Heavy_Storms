@@ -12,6 +12,7 @@ public final class HeavyStormsConfig {
     public static final ForgeConfigSpec.IntValue CAPACITOR_MAX_RECEIVE;
     public static final ForgeConfigSpec.IntValue CAPACITOR_MAX_EXTRACT;
     public static final ForgeConfigSpec.IntValue CAPACITOR_CHARGE_PER_STRIKE;
+    public static final ForgeConfigSpec.DoubleValue CAPACITOR_STRIKE_CHANCE;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -41,6 +42,9 @@ public final class HeavyStormsConfig {
         CAPACITOR_CHARGE_PER_STRIKE = builder
                 .comment("How much FE a single lightning strike generates inside the capacitor.")
                 .defineInRange("chargePerStrike", 500000, 1, Integer.MAX_VALUE);
+        CAPACITOR_STRIKE_CHANCE = builder
+                .comment("Chance (0.0-1.0) that a nearby lightning attempt will retarget to the capacitor instead of striking normally.")
+                .defineInRange("strikeChance", 0.12D, 0.0D, 1.0D);
         builder.pop();
 
         SERVER_SPEC = builder.build();

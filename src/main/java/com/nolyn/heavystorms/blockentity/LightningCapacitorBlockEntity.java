@@ -202,7 +202,7 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
     }
 
     private boolean shouldDisplayLeds() {
-        return getEnergyStoredInternal() > 0 || strikeTicks > 0 || connectionFlashTicks > 0;
+        return true;
     }
 
     private void removeNearbyFire() {
