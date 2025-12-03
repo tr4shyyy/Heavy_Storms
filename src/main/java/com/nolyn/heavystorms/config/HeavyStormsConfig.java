@@ -8,6 +8,7 @@ public final class HeavyStormsConfig {
     public static final ModConfigSpec.IntValue EXTRA_LIGHTNING_ATTEMPTS;
     public static final ModConfigSpec.DoubleValue EXTRA_LIGHTNING_CHANCE;
     public static final ModConfigSpec.IntValue LIGHTNING_RADIUS;
+    public static final ModConfigSpec.DoubleValue CAPACITOR_PULL_CHANCE;
     public static final ModConfigSpec.IntValue CAPACITOR_CAPACITY;
     public static final ModConfigSpec.IntValue CAPACITOR_MAX_RECEIVE;
     public static final ModConfigSpec.IntValue CAPACITOR_MAX_EXTRACT;
@@ -26,6 +27,9 @@ public final class HeavyStormsConfig {
         LIGHTNING_RADIUS = builder
                 .comment("Maximum horizontal distance (in blocks) from a nearby player where extra lightning may be spawned.")
                 .defineInRange("extraStrikeRadius", 128, 8, 256);
+        CAPACITOR_PULL_CHANCE = builder
+                .comment("Chance (0.0-1.0) that lightning is redirected to a nearby lightning capacitor when one is found.")
+                .defineInRange("capacitorPullChance", 0.10D, 0.0D, 1.0D);
         builder.pop();
 
         builder.comment("Lightning capacitor settings.").push("capacitor");

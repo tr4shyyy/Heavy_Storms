@@ -26,7 +26,6 @@ public final class HeavyStormsEvents {
     private static final int CAPACITOR_ATTRACTION_RADIUS = 24;
     private static final int FIRE_EXTINGUISH_HORIZONTAL_RADIUS = 1;
     private static final int FIRE_EXTINGUISH_VERTICAL_RADIUS = 1;
-    private static final double CAPACITOR_PULL_CHANCE = 0.25D;
 
     private HeavyStormsEvents() {}
 
@@ -91,8 +90,9 @@ public final class HeavyStormsEvents {
         int radius = HeavyStormsConfig.LIGHTNING_RADIUS.get();
         ServerPlayer anchor = players.get(level.random.nextInt(players.size()));
         BlockPos anchorPos = anchor.blockPosition();
+        double pullChance = HeavyStormsConfig.CAPACITOR_PULL_CHANCE.get();
 
-        if (level.random.nextDouble() < CAPACITOR_PULL_CHANCE) {
+        if (level.random.nextDouble() < pullChance) {
             BlockPos capacitorTarget = findNearbyCapacitorTarget(level, anchorPos, CAPACITOR_ATTRACTION_RADIUS);
             if (capacitorTarget != null && spawnLightningBolt(level, capacitorTarget)) {
                 return;
@@ -132,9 +132,10 @@ public final class HeavyStormsEvents {
         if (!(event.getLevel() instanceof ServerLevel serverLevel)) {
             return;
         }
+        double pullChance = HeavyStormsConfig.CAPACITOR_PULL_CHANCE.get();
 
         BlockPos spawnPos = BlockPos.containing(lightning.getX(), lightning.getY(), lightning.getZ());
-        if (serverLevel.random.nextDouble() < CAPACITOR_PULL_CHANCE) {
+        if (serverLevel.random.nextDouble() < pullChance) {
             BlockPos capacitorTarget = findNearbyCapacitorTarget(serverLevel, spawnPos, CAPACITOR_ATTRACTION_RADIUS);
             if (capacitorTarget != null) {
                 lightning.moveTo(capacitorTarget.getX() + 0.5D, capacitorTarget.getY(), capacitorTarget.getZ() + 0.5D);

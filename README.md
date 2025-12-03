@@ -33,9 +33,10 @@ A server-side config file `heavy_storms-server.toml` (created after the first ru
 
 | Key | Description | Default |
 | --- | --- | --- |
-| `lightning.extraAttemptsPerTick` | Extra lightning attempts each tick during thunderstorms | `3` |
-| `lightning.extraStrikeChance` | Per-attempt spawn chance (0.0 - 1.0) | `0.35` |
-| `lightning.extraStrikeRadius` | Max horizontal distance from players (blocks) | `64` |
+| `lightning.extraAttemptsPerTick` | Extra lightning attempts each tick during thunderstorms | `1` |
+| `lightning.extraStrikeChance` | Per-attempt spawn chance (0.0 - 1.0) | `0.05` |
+| `lightning.extraStrikeRadius` | Max horizontal distance from players (blocks) | `128` |
+| `lightning.capacitorPullChance` | Chance (0.0 - 1.0) that lightning retargets to a nearby capacitor | `0.10` |
 | `capacitor.capacity` | Total FE storage of the Lightning Capacitor | `1_000_000` |
 | `capacitor.maxReceive` | Max FE accepted per transfer | `20_000` |
 | `capacitor.maxExtract` | Max FE output per transfer | `20_000` |

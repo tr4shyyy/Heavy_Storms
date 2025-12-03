@@ -206,7 +206,7 @@ public class LightningCapacitorBlockEntity extends BlockEntity {
     }
 
     public boolean shouldDisplayLeds() {
-        return energy > 0 || connectionTicks > 0;
+        return true;
     }
 
     private void flagConnectionActivity() {
