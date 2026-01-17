@@ -7,8 +7,8 @@ Heavy Storms amplifies thunderstorms and introduces a Forge Energy compatible Li
 ## Features
 
 - Spawns additional lightning strikes around players during thunderstorms with configurable frequency and radius.
-- Adds the Lightning Capacitor block that only charges when placed with a lightning rod mounted on top, gaining FE from real lightning strikes.
-- Exposes Forge Energy via the standard Forge capability system so automation mods (e.g., Mekanism universal cables) can interact with the capacitor.
+- Adds the Lightning Capacitor block that gains FE from real lightning strikes. (no lighting rod required)
+- Exposes Forge Energy via the standard Forge capability system so automation mods (e.g., Mekanism universal cables or any other FE power managment system) can interact with the capacitor.
 
 ## Building & Development
 
