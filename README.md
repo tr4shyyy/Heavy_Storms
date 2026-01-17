@@ -1,4 +1,4 @@
-![Heavy Storms Preview](https://github.com/tr4shyyy/Heavy_Storms/blob/1.21.1/Heavy_storms_1.gif?raw=true)
+![Heavy Storms Preview](https://raw.githubusercontent.com/tr4shyyy/Heavy_Storms/refs/heads/1.20.1/heavystorms_preview.gif?raw=true)
 
 # Heavy Storms (NeoForge 1.21.1)
 
@@ -7,8 +7,9 @@ Heavy Storms amplifies thunderstorms and introduces a Forge Energy compatible Li
 ## Features
 
 - Spawns additional lightning strikes around players during thunderstorms with configurable frequency and radius.
-- Adds the Lightning Capacitor block that acts as its own lightning rod, gaining FE directly from real lightning strikes.
-- Exposes Forge Energy via the modern NeoForge capability system so automation mods (e.g., Mekanism universal cables) can interact with the capacitor.
+- Adds the Lightning Capacitor block that gains FE from real lightning strikes. (no lighting rod required)
+- Exposes Forge Energy via the standard Forge capability system so automation mods (e.g., Mekanism universal cables or any other FE power         managment system) can interact with the capacitor.
+
 
 ## Building & Development
 
