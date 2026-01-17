@@ -1,4 +1,4 @@
-![Heavy Storms Preview](https://github.com/tr4shyyy/Heavy_Storms/blob/master/Heavy_storms_1.gif?raw=true)
+![Heavy Storms Preview](https://github.com/tr4shyyy/Heavy_Storms/blob/master/heavystorms_preview.gif?raw=true)
 
 # Heavy Storms (Forge 1.20.1)
 
