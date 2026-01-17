@@ -15,6 +15,7 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -55,12 +56,12 @@ public final class LightningCapacitorRenderer implements BlockEntityRenderer<Lig
         ModelManager modelManager = Minecraft.getInstance().getModelManager();
         BakedModel baseModel = modelManager.getModel(baseModelLocation);
         logIfMissing(modelManager, baseModel, baseModelLocation, () -> baseMissingLogged, () -> baseMissingLogged = true);
-        renderModel(poseStack, buffer.getBuffer(RenderType.cutout()), state, baseModel, 1.0F, 1.0F, 1.0F, packedLight);
+        renderModel(poseStack, buffer.getBuffer(RenderType.entityCutoutNoCull(InventoryMenu.BLOCK_ATLAS)), state, baseModel, 1.0F, 1.0F, 1.0F, packedLight);
 
         if (blockEntity.getLedVisible()) {
             BakedModel ledModel = modelManager.getModel(ledModelLocation);
             logIfMissing(modelManager, ledModel, ledModelLocation, () -> ledMissingLogged, () -> ledMissingLogged = true);
-            renderModel(poseStack, buffer.getBuffer(RenderType.cutout()), state, ledModel, 1.0F, 1.0F, 1.0F, LightTexture.FULL_BRIGHT);
+            renderModel(poseStack, buffer.getBuffer(RenderType.entityCutoutNoCull(InventoryMenu.BLOCK_ATLAS)), state, ledModel, 1.0F, 1.0F, 1.0F, LightTexture.FULL_BRIGHT);
         }
 
         float glow = blockEntity.getGlowIntensity(partialTick);
@@ -68,7 +69,7 @@ public final class LightningCapacitorRenderer implements BlockEntityRenderer<Lig
             float clamped = Mth.clamp(glow, 0.0F, 1.0F);
             BakedModel glowModel = modelManager.getModel(glowModelLocation);
             logIfMissing(modelManager, glowModel, glowModelLocation, () -> glowMissingLogged, () -> glowMissingLogged = true);
-            renderModel(poseStack, buffer.getBuffer(RenderType.translucent()), state, glowModel, clamped, clamped, clamped, LightTexture.FULL_BRIGHT);
+            renderModel(poseStack, buffer.getBuffer(RenderType.entityCutoutNoCull(InventoryMenu.BLOCK_ATLAS)), state, glowModel, clamped, clamped, clamped, LightTexture.FULL_BRIGHT);
         }
     }
 
